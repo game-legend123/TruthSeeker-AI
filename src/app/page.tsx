@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { BrainCircuit, CheckCircle2, Circle, Eye, HelpCircle, Loader2, RefreshCw, Target, ThumbsDown, ThumbsUp, XCircle, Play } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 type WitnessStatement = GenerateWitnessStatementsOutput["statements"][0];
 type UserAssessments = Record<number, boolean>;
@@ -216,8 +217,8 @@ const StatsPanel = ({ statements, assessments, isRevealed, onReveal, onReset }: 
         <div className="space-y-4 pt-4 border-t">
           <h3 className="text-lg font-headline">Ước tính cuối cùng</h3>
           <Textarea placeholder="Dựa trên bằng chứng, phiên bản sự thật của bạn là gì?" disabled={isRevealed} />
-          <div>
-            <FormLabel>Độ tin cậy trong ước tính</FormLabel>
+          <div className="space-y-2">
+            <Label>Độ tin cậy trong ước tính</Label>
             <Slider defaultValue={[50]} max={100} step={1} disabled={isRevealed} />
           </div>
         </div>
