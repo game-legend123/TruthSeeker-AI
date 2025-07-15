@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, startTransition } from "react";
+import React, { useState, useMemo, startTransition, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,15 +13,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { BrainCircuit, CheckCircle2, Circle, Eye, HelpCircle, Loader2, RefreshCw, Target, ThumbsDown, ThumbsUp, XCircle } from "lucide-react";
+import { BrainCircuit, CheckCircle2, Circle, Eye, HelpCircle, Loader2, RefreshCw, Target, ThumbsDown, ThumbsUp, XCircle, Play } from "lucide-react";
 
 type WitnessStatement = GenerateWitnessStatementsOutput["statements"][0];
 type UserAssessments = Record<number, boolean>;
 
 const generationSchema = z.object({
-  topic: z.string().min(10, { message: "Please enter a more descriptive topic." }).max(150),
+  topic: z.string().min(10, { message: "Vui lòng nhập một chủ đề mô tả chi tiết hơn." }).max(150),
   numStatements: z.number().min(4).max(12).default(6),
 });
 
@@ -34,12 +35,35 @@ const TruthSeekerLogo = () => (
   </svg>
 );
 
+const TutorialDialog = ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+                <DialogTitle>Hướng dẫn chơi</DialogTitle>
+                <DialogDescription>Chào mừng đến với TruthSeeker AI!</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <p>1. Nhập một chủ đề bạn muốn điều tra.</p>
+                <p>2. AI sẽ tạo ra một số lời khai - một vài trong số đó là sự thật, số khác là bịa đặt.</p>
+                <p>3. Đánh giá mỗi lời khai là "Đúng" hay "Sai".</p>
+                <p>4. Sau khi bạn đã đánh giá tất cả, hãy nhấn "Tiết lộ sự thật" để xem kết quả của bạn.</p>
+                <p>Mục tiêu của bạn là phân biệt sự thật khỏi hư cấu. Chúc may mắn, điều tra viên!</p>
+            </div>
+            <DialogFooter>
+                <Button onClick={() => onOpenChange(false)}>
+                    <Play className="mr-2 h-4 w-4" /> Bắt đầu chơi
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+);
+
 
 const GenerationControls = ({ onGenerate, isLoading }: { onGenerate: (values: z.infer<typeof generationSchema>) => void, isLoading: boolean }) => {
   const form = useForm<z.infer<typeof generationSchema>>({
     resolver: zodResolver(generationSchema),
     defaultValues: {
-      topic: "The first manned mission to Mars",
+      topic: "Nhiệm vụ có người lái đầu tiên lên sao Hỏa",
       numStatements: 6,
     },
   });
@@ -47,8 +71,8 @@ const GenerationControls = ({ onGenerate, isLoading }: { onGenerate: (values: z.
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">Investigation Parameters</CardTitle>
-        <CardDescription>Define the scenario you want to investigate.</CardDescription>
+        <CardTitle className="font-headline text-2xl">Thông số điều tra</CardTitle>
+        <CardDescription>Xác định kịch bản bạn muốn điều tra.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onGenerate)}>
@@ -58,9 +82,9 @@ const GenerationControls = ({ onGenerate, isLoading }: { onGenerate: (values: z.
               name="topic"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Topic of Investigation</FormLabel>
+                  <FormLabel>Chủ đề điều tra</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., The disappearance of Amelia Earhart" {...field} />
+                    <Input placeholder="ví dụ: Sự mất tích của Amelia Earhart" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -71,7 +95,7 @@ const GenerationControls = ({ onGenerate, isLoading }: { onGenerate: (values: z.
               name="numStatements"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Number of Witness Statements: {field.value}</FormLabel>
+                  <FormLabel>Số lượng lời khai: {field.value}</FormLabel>
                   <FormControl>
                     <Slider
                       min={4}
@@ -88,7 +112,7 @@ const GenerationControls = ({ onGenerate, isLoading }: { onGenerate: (values: z.
           <CardFooter>
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
-              Generate Evidence
+              Tạo bằng chứng
             </Button>
           </CardFooter>
         </form>
@@ -127,7 +151,7 @@ const WitnessCard = ({ statement, userAssessment, isRevealed, onAssess }: { stat
               disabled={isRevealed}
               aria-pressed={userAssessment === true}
             >
-              <ThumbsUp className="h-4 w-4 mr-2"/> True
+              <ThumbsUp className="h-4 w-4 mr-2"/> Đúng
             </Button>
             <Button
               size="sm"
@@ -136,7 +160,7 @@ const WitnessCard = ({ statement, userAssessment, isRevealed, onAssess }: { stat
               disabled={isRevealed}
               aria-pressed={userAssessment === false}
             >
-              <ThumbsDown className="h-4 w-4 mr-2"/> False
+              <ThumbsDown className="h-4 w-4 mr-2"/> Sai
             </Button>
           </div>
           <div className="w-6 h-6">{getIcon()}</div>
@@ -162,14 +186,14 @@ const StatsPanel = ({ statements, assessments, isRevealed, onReveal, onReset }: 
   return (
     <Card className="sticky top-6">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">Case Dashboard</CardTitle>
+        <CardTitle className="font-headline text-2xl">Bảng điều khiển</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
           <div className="flex justify-between items-center mb-1">
             <div className="flex items-center text-sm font-medium">
               <HelpCircle className="w-4 h-4 mr-2 text-muted-foreground" />
-              <span>Progress</span>
+              <span>Tiến độ</span>
             </div>
             <span className="font-mono text-sm">{progress.toFixed(0)}%</span>
           </div>
@@ -181,7 +205,7 @@ const StatsPanel = ({ statements, assessments, isRevealed, onReveal, onReset }: 
           <div className="flex justify-between items-center mb-1">
             <div className="flex items-center text-sm font-medium">
               <Target className="w-4 h-4 mr-2 text-muted-foreground" />
-              <span>Confidence</span>
+              <span>Độ tin cậy</span>
             </div>
             <span className="font-mono text-sm">{isRevealed ? confidence.toFixed(0) : '??'}%</span>
           </div>
@@ -190,10 +214,10 @@ const StatsPanel = ({ statements, assessments, isRevealed, onReveal, onReset }: 
           </div>
         </div>
         <div className="space-y-4 pt-4 border-t">
-          <h3 className="text-lg font-headline">Final Estimation</h3>
-          <Textarea placeholder="Based on the evidence, what is your version of the truth?" disabled={isRevealed} />
+          <h3 className="text-lg font-headline">Ước tính cuối cùng</h3>
+          <Textarea placeholder="Dựa trên bằng chứng, phiên bản sự thật của bạn là gì?" disabled={isRevealed} />
           <div>
-            <FormLabel>Confidence in Estimation</FormLabel>
+            <FormLabel>Độ tin cậy trong ước tính</FormLabel>
             <Slider defaultValue={[50]} max={100} step={1} disabled={isRevealed} />
           </div>
         </div>
@@ -201,11 +225,11 @@ const StatsPanel = ({ statements, assessments, isRevealed, onReveal, onReset }: 
       <CardFooter className="flex flex-col sm:flex-row gap-2">
         <Button onClick={onReveal} disabled={isRevealed} className="w-full">
           <Eye className="h-4 w-4 mr-2" />
-          Reveal Truth
+          Tiết lộ sự thật
         </Button>
         <Button onClick={onReset} variant="outline" className="w-full">
           <RefreshCw className="h-4 w-4 mr-2" />
-          New Case
+          Vụ án mới
         </Button>
       </CardFooter>
     </Card>
@@ -217,7 +241,16 @@ export default function Home() {
   const [statements, setStatements] = useState<WitnessStatement[] | null>(null);
   const [userAssessments, setUserAssessments] = useState<UserAssessments>({});
   const [isRevealed, setIsRevealed] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem('hasSeenTruthSeekerTutorial');
+    if (!hasSeenTutorial) {
+        setShowTutorial(true);
+        localStorage.setItem('hasSeenTruthSeekerTutorial', 'true');
+    }
+  }, []);
   
   const handleGenerate = async (values: z.infer<typeof generationSchema>) => {
     setIsLoading(true);
@@ -228,12 +261,12 @@ export default function Home() {
       const result = await generateStatementsAction(values);
       if (result.success && result.data) {
         setStatements(result.data.statements);
-        toast({ title: "Evidence generated", description: "Review the witness statements to find the truth." });
+        toast({ title: "Bằng chứng đã được tạo", description: "Xem xét các lời khai để tìm ra sự thật." });
       } else {
         toast({
           variant: "destructive",
-          title: "Generation Failed",
-          description: result.error || "An unknown error occurred.",
+          title: "Tạo bằng chứng thất bại",
+          description: result.error || "Đã xảy ra lỗi không xác định.",
         });
       }
       setIsLoading(false);
@@ -254,6 +287,7 @@ export default function Home() {
   
   return (
     <main className="min-h-full bg-background text-foreground p-4 sm:p-6 lg:p-8">
+      <TutorialDialog open={showTutorial} onOpenChange={setShowTutorial} />
       <div className="max-w-7xl mx-auto">
         <header className="text-center mb-12">
           <div className="flex justify-center items-center gap-4 mb-4">
@@ -261,7 +295,7 @@ export default function Home() {
             <h1 className="font-headline text-5xl font-bold tracking-tighter">TruthSeeker AI</h1>
           </div>
           <p className="text-muted-foreground max-w-3xl mx-auto text-lg">
-            You receive intelligence from multiple AI "witnesses". Some facts are true, others are fabricated to deceive. Your goal: reconstruct the truth. But there is no absolute answer.
+          Bạn nhận được thông tin từ nhiều "nhân chứng" AI. Một số sự thật là đúng, những cái khác được bịa ra để đánh lừa. Mục tiêu của bạn: tái tạo lại sự thật. Nhưng không có câu trả lời tuyệt đối.
           </p>
         </header>
 
@@ -274,8 +308,8 @@ export default function Home() {
         {isLoading && (
           <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground animate-in fade-in-50 duration-500">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="font-headline text-2xl">Generating quantum realities...</p>
-            <p>Please wait while the AI constructs the narrative.</p>
+            <p className="font-headline text-2xl">Đang tạo ra các thực tại lượng tử...</p>
+            <p>Vui lòng đợi trong khi AI xây dựng câu chuyện.</p>
           </div>
         )}
         

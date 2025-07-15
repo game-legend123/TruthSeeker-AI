@@ -35,15 +35,15 @@ const prompt = ai.definePrompt({
   name: 'generateWitnessStatementsPrompt',
   input: {schema: GenerateWitnessStatementsInputSchema},
   output: {schema: GenerateWitnessStatementsOutputSchema},
-  prompt: `You are a game master generating witness statements for a game called TruthSeeker AI. The game involves players analyzing information to discern the truth.
+  prompt: `Bạn là một người quản trò đang tạo ra các lời khai của nhân chứng cho một trò chơi có tên là TruthSeeker AI. Trò chơi yêu cầu người chơi phân tích thông tin để nhận ra sự thật.
 
-  Generate {{numStatements}} witness statements about the following topic: {{topic}}.
-  Some statements should be factual, and some should be fabricated to mislead the player. For each statement, clearly mark whether it is true or false.
+  Tạo {{numStatements}} lời khai của nhân chứng bằng TIẾNG VIỆT về chủ đề sau: {{topic}}.
+  Một số lời khai phải là sự thật, và một số phải được bịa đặt để đánh lừa người chơi. Đối với mỗi lời khai, hãy đánh dấu rõ ràng liệu nó là đúng hay sai.
 
-  Return the statements as a JSON array, where each object in the array has a "text" field containing the statement, and an "isTrue" field indicating whether the statement is true or false.
-  The output MUST be valid JSON. Do not include any preamble or postamble; output only the JSON. Ensure isTrue is a boolean (true/false), not a string.
+  Trả về các lời khai dưới dạng một mảng JSON, trong đó mỗi đối tượng trong mảng có một trường "text" chứa lời khai, và một trường "isTrue" cho biết lời khai đó là đúng hay sai.
+  Đầu ra PHẢI là JSON hợp lệ. Không bao gồm bất kỳ phần mở đầu hay kết thúc nào; chỉ xuất ra JSON. Đảm bảo isTrue là một boolean (true/false), không phải là một chuỗi.
 
-  Here's the format of the output. Output MUST conform exactly to this format.
+  Đây là định dạng của đầu ra. Đầu ra PHẢI tuân thủ chính xác định dạng này.
   \`\`\`
   {
     "statements": [
